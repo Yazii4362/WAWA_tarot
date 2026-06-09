@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { CloudField } from "./CloudField";
+import { categories } from "../data/categories";
 
 export function Layout() {
   return (
@@ -16,6 +17,13 @@ export function Layout() {
           <NavLink to="/" end>
             홈
           </NavLink>
+          {categories
+            .filter((c) => c.id !== "today")
+            .map((c) => (
+              <NavLink key={c.id} to={`/c/${c.id}`}>
+                <span aria-hidden="true">{c.emoji}</span> {c.name}
+              </NavLink>
+            ))}
           <NavLink to="/about">와와 소개</NavLink>
         </nav>
       </header>

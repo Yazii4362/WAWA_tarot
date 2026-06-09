@@ -1,25 +1,61 @@
-import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { getSpread } from "../data/spreads";
+import { getSpread, type SpreadDefinition } from "../data/spreads";
+import {
+  getCategory,
+  getQuestion,
+  type Category,
+  type CategoryQuestion,
+} from "../data/categories";
 import type { DrawnCard } from "../utils/tarot";
 import { buildPickPool } from "../utils/tarot";
 import { TarotCardView } from "../components/TarotCardView";
 import { CardBack } from "../components/CardBack";
 import { buildIntensity, buildLucky } from "../utils/fortuneFlavors";
+import { buildConclusion, formatStars5 } from "../utils/wawaResult";
 import type { WawaMode } from "../data/voiceTexts";
 import { getVoice } from "../data/voiceTexts";
 
 type ResultView = WawaMode | "both";
-
 type Phase = "ask" | "shuffling" | "picking" | "revealing" | "done";
+
+/** 카테고리 진입(쿼리)일 때 쓰는 가상 스프레드 — 1카드. */
+const ONE_CARD_SPREAD: SpreadDefinition = {
+  id: "one-card",
+  name: "와와에게 한 장",
+  subtitle: "One Card",
+  description:
+    "지금 가장 마음에 걸리는 한 가지를 떠올린 채로, 카드 한 장을 뽑아주세요.",
+  count: 1,
+  rows: [1],
+  positions: [
+    { index: 0, label: "와와의 한 마디", hint: "지금 너에게 필요한 통찰" },
+  ],
+  suggestions: [],
+};
 
 export function Reading() {
   const { spreadId } = useParams<{ spreadId: string }>();
-  const spread = useMemo(
-    () => (spreadId ? getSpread(spreadId) : undefined),
-    [spreadId]
-  );
+  const [search] = useSearchParams();
+  const catId = search.get("cat") ?? undefined;
+  const questionId = search.get("q") ?? undefined;
+
+  const category: Category | undefined = catId ? getCategory(catId) : undefined;
+  const presetQuestion: CategoryQuestion | undefined =
+    catId && questionId ? getQuestion(catId, questionId) : undefined;
+
+  /**
+   * 진행할 스프레드 결정:
+   * 1) 카테고리 진입 → 항상 1카드 스프레드 (ONE_CARD_SPREAD)
+   * 2) /reading/:spreadId → 해당 스프레드
+   * 3) /reading 자유 진입 → 1카드 스프레드
+   */
+  const spread: SpreadDefinition | undefined = useMemo(() => {
+    if (category) return ONE_CARD_SPREAD;
+    if (spreadId) return getSpread(spreadId);
+    return ONE_CARD_SPREAD;
+  }, [category, spreadId]);
 
   const [phase, setPhase] = useState<Phase>("ask");
   const [question, setQuestion] = useState("");
@@ -27,8 +63,13 @@ export function Reading() {
   const [pickedIdx, setPickedIdx] = useState<number[]>([]);
   const [cards, setCards] = useState<DrawnCard[]>([]);
   const [revealed, setRevealed] = useState<boolean[]>([]);
-  // null = 모드 선택 전, 그 외 = 선택된 결과 시점
-  const [resultView, setResultView] = useState<ResultView | null>(null);
+  // 카테고리 진입 시 디폴트는 "둘 다 보기" — 사용자가 보여준 결과 예시 톤
+  const [resultView, setResultView] = useState<ResultView>("both");
+
+  // 카테고리/질문 prefill
+  useEffect(() => {
+    if (presetQuestion) setQuestion(presetQuestion.label);
+  }, [presetQuestion]);
 
   if (!spread) {
     return (
@@ -91,7 +132,7 @@ export function Reading() {
     setRevealed([]);
     setPool([]);
     setPickedIdx([]);
-    setResultView(null);
+    setResultView("both");
   };
 
   const reshuffle = () => {
@@ -99,7 +140,7 @@ export function Reading() {
     setRevealed([]);
     setPool([]);
     setPickedIdx([]);
-    setResultView(null);
+    setResultView("both");
     setPhase("shuffling");
     const drawn = buildPickPool(spread.count);
     setTimeout(() => {
@@ -110,72 +151,22 @@ export function Reading() {
 
   return (
     <div className="reading">
-      <section
-        className="hero"
-        style={{ paddingBottom: 0, paddingTop: "var(--sp-6)" }}
-      >
-        <span className="eyebrow">{spread.subtitle}</span>
-        <h1>{spread.name}</h1>
-        <p className="lead">{spread.description}</p>
-      </section>
+      <ReadingHeader
+        spread={spread}
+        category={category}
+        presetQuestion={presetQuestion}
+        phase={phase}
+      />
 
       {phase === "ask" && (
-        <motion.div
-          className="question-bar"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <label htmlFor="q">
-            <span>🐕 와와에게 묻고 싶은 것</span>
-            <span className="optional">선택사항</span>
-          </label>
-          <input
-            id="q"
-            type="text"
-            placeholder="예) 지금 그 사람과 나, 어떤 단계에 있는 걸까?"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            maxLength={120}
-          />
-
-          <div className="suggestions">
-            <span className="suggestions__label">추천</span>
-            {spread.suggestions.map((s) => (
-              <button
-                key={s}
-                type="button"
-                className="chip"
-                onClick={() => setQuestion(s)}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-
-          <div className="row">
-            <span
-              style={{
-                color: "var(--c-text-muted)",
-                fontSize: "var(--fs-xs)",
-                letterSpacing: "0.08em",
-              }}
-            >
-              질문이 없어도 와와는 일단 카드를 펼쳐요
-            </span>
-            <span className="spacer" />
-            <Link to="/" className="btn btn-ghost">
-              취소
-            </Link>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={startDraw}
-            >
-              <span>🐕</span> 와와에게 카드 받기
-            </button>
-          </div>
-        </motion.div>
+        <AskPanel
+          spread={spread}
+          category={category}
+          presetQuestion={presetQuestion}
+          question={question}
+          onChangeQuestion={setQuestion}
+          onStart={startDraw}
+        />
       )}
 
       {phase === "shuffling" && <ShuffleStage />}
@@ -214,25 +205,23 @@ export function Reading() {
                   className="center-text"
                   style={{ marginBottom: 4, fontSize: "var(--fs-sm)" }}
                 >
-                  🐕 카드를 한 장씩 천천히 뒤집어 보세요
+                  🐕 카드를 천천히 뒤집어 보세요
                 </p>
                 <button
                   type="button"
                   className="btn btn-ghost"
                   onClick={revealAll}
                 >
-                  한 번에 보기
+                  지금 보기
                 </button>
               </div>
             )}
 
-            {phase === "done" && resultView === null && (
-              <ModeSelect onPick={(m) => setResultView(m)} />
-            )}
-
-            {phase === "done" && resultView !== null && (
+            {phase === "done" && (
               <ReadingResult
                 spread={spread}
+                category={category}
+                questionId={questionId}
                 cards={cards}
                 question={question}
                 view={resultView}
@@ -248,6 +237,166 @@ export function Reading() {
   );
 }
 
+/* ============================================================
+   HEADER — 카테고리 진입 시 카테고리 정보를 우선 표시
+   ============================================================ */
+function ReadingHeader({
+  spread,
+  category,
+  presetQuestion,
+  phase,
+}: {
+  spread: SpreadDefinition;
+  category: Category | undefined;
+  presetQuestion: CategoryQuestion | undefined;
+  phase: Phase;
+}) {
+  const stepIndex =
+    phase === "ask"
+      ? 1
+      : phase === "shuffling" || phase === "picking"
+        ? 2
+        : phase === "revealing"
+          ? 3
+          : 4;
+
+  const steps = [
+    { n: 1, label: "질문하기" },
+    { n: 2, label: "카드 뽑기" },
+    { n: 3, label: "카드 뒤집기" },
+    { n: 4, label: "와와의 한 마디" },
+  ];
+
+  return (
+    <section
+      className="reading-header"
+      style={{ paddingTop: "var(--sp-6)", paddingBottom: 0 }}
+    >
+      {category ? (
+        <>
+          <span className="eyebrow">
+            {category.emoji} {category.name} · {category.tagline}
+          </span>
+          <h1>{presetQuestion?.label ?? spread.name}</h1>
+          {presetQuestion?.hint && <p className="lead">{presetQuestion.hint}</p>}
+        </>
+      ) : (
+        <>
+          <span className="eyebrow">{spread.subtitle}</span>
+          <h1>{spread.name}</h1>
+          <p className="lead">{spread.description}</p>
+        </>
+      )}
+
+      <ol className="step-progress" aria-label="진행 단계">
+        {steps.map((s) => {
+          const status =
+            s.n < stepIndex ? "done" : s.n === stepIndex ? "current" : "todo";
+          return (
+            <li key={s.n} className={`step-progress__item is-${status}`}>
+              <span className="step-progress__num">{s.n}</span>
+              <span className="step-progress__label">{s.label}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
+/* ============================================================
+   ASK PANEL — 자유 질문 또는 카테고리 추천 칩
+   ============================================================ */
+function AskPanel({
+  spread,
+  category,
+  presetQuestion,
+  question,
+  onChangeQuestion,
+  onStart,
+}: {
+  spread: SpreadDefinition;
+  category: Category | undefined;
+  presetQuestion: CategoryQuestion | undefined;
+  question: string;
+  onChangeQuestion: (v: string) => void;
+  onStart: () => void;
+}) {
+  // 추천 질문: 카테고리가 있으면 카테고리 안의 4개, 아니면 spread.suggestions
+  const suggestions = category
+    ? category.questions.map((q) => q.label)
+    : spread.suggestions;
+
+  return (
+    <motion.div
+      className="question-bar"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <label htmlFor="q">
+        <span>🐕 와와에게 묻고 싶은 것</span>
+        <span className="optional">선택사항</span>
+      </label>
+      <input
+        id="q"
+        type="text"
+        placeholder={
+          presetQuestion?.label ??
+          "예) 지금 그 사람과 나, 어떤 단계에 있는 걸까?"
+        }
+        value={question}
+        onChange={(e) => onChangeQuestion(e.target.value)}
+        maxLength={120}
+      />
+
+      {suggestions.length > 0 && (
+        <div className="suggestions">
+          <span className="suggestions__label">
+            {category ? `${category.emoji} 자주 듣는 질문` : "추천"}
+          </span>
+          {suggestions.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`chip ${question === s ? "is-active" : ""}`}
+              onClick={() => onChangeQuestion(s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="row">
+        <span
+          style={{
+            color: "var(--c-text-muted)",
+            fontSize: "var(--fs-xs)",
+            letterSpacing: "0.08em",
+          }}
+        >
+          질문이 없어도 와와는 일단 카드를 펼쳐요
+        </span>
+        <span className="spacer" />
+        <Link to="/" className="btn btn-ghost">
+          취소
+        </Link>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={onStart}
+        >
+          <span>🐕</span> 와와에게 카드 받기
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ============================================================
+   SHUFFLE STAGE
+   ============================================================ */
 const SHUFFLE_HINTS = [
   "🐕 와와가 카드 냄새 맡는 중...",
   "🐕 카드 섞는 중...",
@@ -303,6 +452,9 @@ function ShuffleStage() {
   );
 }
 
+/* ============================================================
+   PICK STAGE
+   ============================================================ */
 function PickStage({
   pool,
   pickedIdx,
@@ -392,13 +544,16 @@ function PickStage({
   );
 }
 
+/* ============================================================
+   SPREAD BOARD
+   ============================================================ */
 function SpreadBoard({
   spread,
   cards,
   revealed,
   onClickCard,
 }: {
-  spread: ReturnType<typeof getSpread> & object;
+  spread: SpreadDefinition;
   cards: DrawnCard[];
   revealed: boolean[];
   onClickCard: (i: number) => void;
@@ -438,70 +593,13 @@ function SpreadBoard({
   );
 }
 
-function ModeSelect({ onPick }: { onPick: (m: ResultView) => void }) {
-  return (
-    <motion.section
-      className="mode-select"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.55, ease: "easeOut" }}
-    >
-      <header className="mode-select__head">
-        <span className="eyebrow">어떤 와와에게 물어볼까요?</span>
-        <h2>같은 카드, 다른 시선</h2>
-        <p>
-          😇 <strong>천사와와</strong>는 가능성을 봅니다 ·
-          <br />
-          😈 <strong>악마와와</strong>는 리스크를 봅니다 ·
-          <br />둘 다 진실의 한 조각이에요.
-        </p>
-      </header>
-
-      <div className="mode-select__grid">
-        <motion.button
-          type="button"
-          className="mode-card mode-card--angel"
-          onClick={() => onPick("angel")}
-          whileHover={{ y: -6, scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <span className="mode-card__emoji">😇</span>
-          <span className="mode-card__name">천사와와</span>
-          <span className="mode-card__motto">가능성을 봄</span>
-          <span className="mode-card__hint">
-            "기회는 보여. 어떻게 쓰는지는 너에게 달렸어."
-          </span>
-        </motion.button>
-
-        <motion.button
-          type="button"
-          className="mode-card mode-card--demon"
-          onClick={() => onPick("demon")}
-          whileHover={{ y: -6, scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <span className="mode-card__emoji">😈</span>
-          <span className="mode-card__name">악마와와</span>
-          <span className="mode-card__motto">리스크를 봄</span>
-          <span className="mode-card__hint">
-            "가능해. 같은 이유로 멀어질 수도 있어."
-          </span>
-        </motion.button>
-      </div>
-
-      <button
-        type="button"
-        className="mode-select__both"
-        onClick={() => onPick("both")}
-      >
-        ✨ 둘 다 보기
-      </button>
-    </motion.section>
-  );
-}
-
+/* ============================================================
+   READING RESULT — 천사+악마 둘 다 노출 (기본) + 다중 별점 + 한 줄 결론
+   ============================================================ */
 function ReadingResult({
   spread,
+  category,
+  questionId,
   cards,
   question,
   view,
@@ -509,7 +607,9 @@ function ReadingResult({
   onReshuffle,
   onReset,
 }: {
-  spread: ReturnType<typeof getSpread> & object;
+  spread: SpreadDefinition;
+  category: Category | undefined;
+  questionId: string | undefined;
   cards: DrawnCard[];
   question: string;
   view: ResultView;
@@ -522,6 +622,45 @@ function ReadingResult({
     [cards, spread.id]
   );
   const lucky = useMemo(() => buildLucky(cards), [cards]);
+  // 카테고리가 있으면 다중 별점 + 한 줄 결론
+  const conclusion = useMemo(
+    () => (category ? buildConclusion(cards, category, questionId) : null),
+    [cards, category, questionId]
+  );
+
+  const handleShare = async () => {
+    const lines: string[] = [];
+    if (category)
+      lines.push(`${category.emoji} ${category.name} · ${question || category.name}`);
+    else if (question) lines.push(`🐕 ${question}`);
+    if (conclusion) {
+      lines.push("");
+      lines.push(`"${conclusion.oneLine}"`);
+      lines.push("");
+      conclusion.stars.forEach((s) =>
+        lines.push(`${s.label} ${formatStars5(s.stars)}`)
+      );
+    }
+    lines.push("");
+    lines.push(conclusion?.hashtag ?? "#와와타로");
+
+    const text = lines.join("\n");
+    if (typeof navigator !== "undefined" && "share" in navigator) {
+      try {
+        await navigator.share({ title: "와와타로", text });
+        return;
+      } catch {
+        // user cancel
+      }
+    }
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        // ignore
+      }
+    }
+  };
 
   return (
     <motion.section
@@ -532,14 +671,28 @@ function ReadingResult({
     >
       <header>
         <span className="meta">
-          {spread.name} · {spread.subtitle}
+          {category
+            ? `${category.emoji} ${category.name}`
+            : `${spread.name} · ${spread.subtitle}`}
         </span>
         {question && <p className="question">"{question}"</p>}
       </header>
 
+      {conclusion && (
+        <motion.blockquote
+          className="wawa-oneline"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <span className="wawa-oneline__mark">"</span>
+          {conclusion.oneLine}
+        </motion.blockquote>
+      )}
+
       <ViewToggle view={view} onChange={onChangeView} />
 
-      <IntensityGauge intensity={intensity} />
+      {!conclusion && <IntensityGauge intensity={intensity} />}
 
       <div className="reading-card-list">
         {cards.map(({ card, reversed }, i) => {
@@ -567,9 +720,11 @@ function ReadingResult({
                 />
               </div>
               <div>
-                <p className="position">
-                  {pos?.label} · {pos?.hint}
-                </p>
+                {pos && (
+                  <p className="position">
+                    {pos.label} · {pos.hint}
+                  </p>
+                )}
                 <h3>
                   {card.name}
                   {reversed && <span className="reversed-tag">Reversed</span>}
@@ -612,6 +767,26 @@ function ReadingResult({
         })}
       </div>
 
+      {conclusion && (
+        <motion.div
+          className="star-grid"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 0.6 }}
+          aria-label="다중 별점"
+        >
+          {conclusion.stars.map((s) => (
+            <div key={s.key} className="star-grid__row">
+              <span className="star-grid__label">{s.label}</span>
+              <span className="star-grid__stars" aria-hidden="true">
+                {formatStars5(s.stars)}
+              </span>
+              <span className="visually-hidden">{s.stars} / 5</span>
+            </div>
+          ))}
+        </motion.div>
+      )}
+
       <LuckyGrid lucky={lucky} />
 
       <motion.p
@@ -628,6 +803,9 @@ function ReadingResult({
         <button type="button" className="btn btn-ghost" onClick={onReshuffle}>
           다시 뽑기
         </button>
+        <button type="button" className="btn btn-ghost" onClick={handleShare}>
+          공유하기
+        </button>
         <button type="button" className="btn btn-primary" onClick={onReset}>
           다른 질문 하기
         </button>
@@ -639,6 +817,9 @@ function ReadingResult({
   );
 }
 
+/* ============================================================
+   SUB COMPONENTS
+   ============================================================ */
 function IntensityGauge({
   intensity,
 }: {
@@ -676,9 +857,9 @@ function ViewToggle({
   onChange: (v: ResultView) => void;
 }) {
   const items: { value: ResultView; emoji: string; label: string }[] = [
+    { value: "both", emoji: "✨", label: "둘 다" },
     { value: "angel", emoji: "😇", label: "천사와와" },
     { value: "demon", emoji: "😈", label: "악마와와" },
-    { value: "both", emoji: "✨", label: "둘 다" },
   ];
 
   return (

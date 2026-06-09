@@ -1,42 +1,15 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { spreads } from "../data/spreads";
+import { categories } from "../data/categories";
 import { CardBack } from "../components/CardBack";
 import { WawaMascot } from "../components/WawaMascot";
-import { TodayCard } from "../components/TodayCard";
 
 export function Home() {
   return (
     <div>
-      <TodayCard />
       <HeroSection />
-      <SpreadSection />
-      <CtaBanner />
+      <CategoriesSection />
     </div>
-  );
-}
-
-function CtaBanner() {
-  return (
-    <motion.section
-      className="cta-banner"
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-    >
-      <span className="cta-banner__symbol">✦ 🐕 ✦</span>
-      <h2>
-        와와는 <em>편들지 않습니다</em>
-      </h2>
-      <p>
-        원하는 답보다 필요한 해석을. 카드는 거짓말을 못해요.
-        <br />한 장만 뽑아도 충분히 솔직한 이야기를 들을 수 있습니다.
-      </p>
-      <Link to="/reading/one" className="btn btn-primary">
-        🐕 와와에게 카드 한 장 받기
-      </Link>
-    </motion.section>
   );
 }
 
@@ -124,76 +97,65 @@ function HeroSection() {
       >
         희망사항 말고 가능성을 봅니다. 듣기 좋은 말은 전문이 아닙니다.
         <br />
-        78장의 카드가 조용히 기다리고 있어요. 질문 하나만 마음에 담아보세요.
+        지금 가장 마음에 걸리는 한 가지를 골라보세요.
       </motion.p>
-
-      <motion.div
-        className="hero__scroll"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 0.6 }}
-        aria-hidden="true"
-      >
-        <span className="hero__scroll-line" />
-        <span className="hero__scroll-text">Scroll</span>
-      </motion.div>
     </section>
   );
 }
 
-function SpreadSection() {
+function CategoriesSection() {
   return (
-    <section className="spread-section">
-      <div className="section-eyebrow">Spreads</div>
+    <section className="categories">
+      <div className="section-eyebrow">Ask Wawa</div>
       <h2 className="section-title">
-        오늘 와와에게 묻고 싶은 <span>스프레드</span>
+        오늘 와와에게 <span>물어보고 싶은 것</span>
       </h2>
+      <p className="section-sub">
+        카테고리를 고르면 와와가 자주 듣는 질문을 보여줍니다. 자유 질문도 가능해요.
+      </p>
 
-      <div className="spread-grid">
-        {spreads.map((s, i) => (
+      <div className="categories__grid">
+        {categories.map((c, i) => (
           <motion.div
-            key={s.id}
+            key={c.id}
             initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.5, delay: i * 0.08, ease: "easeOut" }}
           >
-            <Link to={`/reading/${s.id}`} className="spread-card">
-              <span className="spread-card__index">
-                {String(i + 1).padStart(2, "0")}
+            <Link
+              to={`/c/${c.id}`}
+              className={`category-card category-card--${c.accent}`}
+            >
+              <span className="category-card__emoji" aria-hidden="true">
+                {c.emoji}
               </span>
-              <SpreadMiniCards count={s.count} />
-
-              <div className="spread-card__body">
-                <span className="count">
-                  {s.count} CARD{s.count > 1 ? "S" : ""} · {s.subtitle}
-                </span>
-                <h2>{s.name}</h2>
-                <p className="desc">{s.description}</p>
-                <span className="cta">시작하기 →</span>
+              <div className="category-card__body">
+                <h3>{c.name}</h3>
+                <p className="category-card__tagline">{c.tagline}</p>
+                <p className="category-card__desc">{c.description}</p>
               </div>
+              <ul className="category-card__hints">
+                {c.questions.slice(0, 3).map((q) => (
+                  <li key={q.id}>· {q.label}</li>
+                ))}
+                {c.questions.length > 3 && (
+                  <li className="category-card__more">
+                    + {c.questions.length - 3}개 더
+                  </li>
+                )}
+              </ul>
+              <span className="category-card__cta">시작하기 →</span>
             </Link>
           </motion.div>
         ))}
       </div>
-    </section>
-  );
-}
 
-function SpreadMiniCards({ count }: { count: number }) {
-  const cards = Array.from({ length: count });
-  return (
-    <div className={`spread-card__mini cols-${count}`} aria-hidden="true">
-      {cards.map((_, i) => (
-        <span
-          key={i}
-          className="mini-card"
-          style={{
-            animationDelay: `${i * 0.18}s`,
-          }}
-        >
-          <span className="mini-card__inner" />
-        </span>
-      ))}
-    </div>
+      <div className="categories__free">
+        <Link to="/reading" className="btn btn-ghost">
+          또는, 자유 질문으로 시작하기 →
+        </Link>
+      </div>
+    </section>
   );
 }
