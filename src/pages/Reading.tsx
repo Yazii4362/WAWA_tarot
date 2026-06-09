@@ -18,7 +18,13 @@ import type { WawaMode } from "../data/voiceTexts";
 import { getVoice } from "../data/voiceTexts";
 
 type ResultView = WawaMode | "both";
-type Phase = "ask" | "shuffling" | "picking" | "revealing" | "done";
+type Phase =
+  | "ask"
+  | "shuffling"
+  | "picking"
+  | "revealing"
+  | "analyzing"
+  | "done";
 
 /** 카테고리 진입(쿼리)일 때 쓰는 가상 스프레드 — 1카드. */
 const ONE_CARD_SPREAD: SpreadDefinition = {
@@ -108,6 +114,8 @@ export function Reading() {
     }
   };
 
+  const ANALYZING_MS = 1700;
+
   const revealAt = (i: number) => {
     setRevealed((prev) => {
       if (prev[i]) return prev;
@@ -115,7 +123,8 @@ export function Reading() {
       next[i] = true;
       const allRevealed = next.every(Boolean);
       if (allRevealed) {
-        setTimeout(() => setPhase("done"), 800);
+        setTimeout(() => setPhase("analyzing"), 600);
+        setTimeout(() => setPhase("done"), 600 + ANALYZING_MS);
       }
       return next;
     });
@@ -123,7 +132,8 @@ export function Reading() {
 
   const revealAll = () => {
     setRevealed(new Array(spread.count).fill(true));
-    setTimeout(() => setPhase("done"), 800);
+    setTimeout(() => setPhase("analyzing"), 600);
+    setTimeout(() => setPhase("done"), 600 + ANALYZING_MS);
   };
 
   const reset = () => {
@@ -180,7 +190,7 @@ export function Reading() {
         />
       )}
 
-      {(phase === "revealing" || phase === "done") && (
+      {(phase === "revealing" || phase === "analyzing" || phase === "done") && (
         <AnimatePresence mode="wait">
           <motion.div
             key="stage"
@@ -216,6 +226,8 @@ export function Reading() {
                 </button>
               </div>
             )}
+
+            {phase === "analyzing" && <AnalyzingStage />}
 
             {phase === "done" && (
               <ReadingResult
@@ -258,7 +270,9 @@ function ReadingHeader({
         ? 2
         : phase === "revealing"
           ? 3
-          : 4;
+          : phase === "analyzing"
+            ? 4
+            : 4;
 
   const steps = [
     { n: 1, label: "질문하기" },
@@ -389,6 +403,99 @@ function AskPanel({
         >
           <span>🐕</span> 와와에게 카드 받기
         </button>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ============================================================
+   ANALYZING STAGE — 카드 다 뒤집고 결과 보여주기 직전, 1.5s 정도
+   "와와가 정밀 분석 중..." + 찌그러지는 와와 + 가짜 진행률
+   ============================================================ */
+const ANALYZING_LOG = [
+  "WAWA NEURAL NET v2.05 부팅...",
+  "카드 좌표 스캔 중 ████░░",
+  "천사와와 모듈 로딩...",
+  "악마와와 모듈 로딩...",
+  "희망사항 필터 활성화 (off)",
+  "현실 보정 게이지 +12%",
+  "라이더-웨이트 78덱 정렬...",
+  "월계관 회전 보정...",
+  "ERR W4W4-0451: 너무 좋은 결과 의심됨",
+  "카드 의도 추출 중 ██████░",
+  "톤 검열기: '독설' 차단 OK",
+  "최종 응답 정리 중...",
+];
+
+function AnalyzingStage() {
+  const [progress, setProgress] = useState(0);
+  const [logIdx, setLogIdx] = useState(0);
+  const [accuracy, setAccuracy] = useState(63.4);
+
+  useEffect(() => {
+    const a = window.setInterval(() => {
+      setProgress((p) => Math.min(99, p + 6 + Math.random() * 9));
+      setAccuracy((v) =>
+        Number((v + (Math.random() * 4 - 1.2)).toFixed(1))
+      );
+    }, 110);
+    const b = window.setInterval(() => {
+      setLogIdx((i) => (i + 1) % ANALYZING_LOG.length);
+    }, 220);
+    return () => {
+      window.clearInterval(a);
+      window.clearInterval(b);
+    };
+  }, []);
+
+  return (
+    <motion.div
+      className="analyzing"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="analyzing__head">[ 정밀 진단 중 ]</div>
+
+      <div className="analyzing__visual">
+        <img
+          src="/images/wawa/wawa-pair.png"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="analyzing__wawa"
+        />
+      </div>
+
+      <p className="analyzing__title">
+        🐕 와와가 당신의 미래를 정밀 분석 중<span className="analyzing__dots" aria-hidden="true">
+          <span>.</span>
+          <span>.</span>
+          <span>.</span>
+        </span>
+      </p>
+
+      <div
+        className="analyzing__bar"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(progress)}
+      >
+        <div
+          className="analyzing__bar-fill"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="analyzing__meta">
+        <span>분석 정확도</span>
+        <strong>{accuracy.toFixed(1)}%</strong>
+        <span className="analyzing__sep">·</span>
+        <span className="analyzing__log">{ANALYZING_LOG[logIdx]}</span>
       </div>
     </motion.div>
   );

@@ -1,3 +1,5 @@
+import { LowPolyCloud } from "./LowPolyCloud";
+
 interface CardBackProps {
   className?: string;
 }
@@ -35,12 +37,6 @@ export function CardBack({ className }: CardBackProps) {
           <stop offset="55%" stopColor="#5aaedd" />
           <stop offset="100%" stopColor="#4197cd" />
         </linearGradient>
-        {/* 구름 (라디얼 흰색) */}
-        <radialGradient id="cb-cloud" cx="50%" cy="35%" r="70%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="55%" stopColor="#f0f6fa" />
-          <stop offset="100%" stopColor="#bccbd6" />
-        </radialGradient>
         {/* 와와 털 그라디언트 */}
         <linearGradient id="cb-fur" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#ecca94" />
@@ -133,26 +129,11 @@ export function CardBack({ className }: CardBackProps) {
         </g>
       </g>
 
-      {/* === 로우폴리 구름들 (외곽선 없이 부드럽게) === */}
-      <g fill="url(#cb-cloud)">
-        {/* 좌상단 구름 */}
-        <ellipse cx="44" cy="92" rx="20" ry="11" />
-        <ellipse cx="62" cy="86" rx="16" ry="10" />
-        <ellipse cx="76" cy="92" rx="13" ry="9" />
-        <ellipse cx="58" cy="80" rx="11" ry="7" />
-        {/* 우상단 구름 */}
-        <ellipse cx="148" cy="108" rx="18" ry="10" />
-        <ellipse cx="162" cy="104" rx="14" ry="9" />
-        <ellipse cx="135" cy="112" rx="12" ry="8" />
-        {/* 좌하단 구름 */}
-        <ellipse cx="42" cy="248" rx="18" ry="10" />
-        <ellipse cx="58" cy="244" rx="14" ry="9" />
-        <ellipse cx="72" cy="250" rx="12" ry="8" />
-        {/* 우하단 구름 */}
-        <ellipse cx="158" cy="234" rx="20" ry="11" />
-        <ellipse cx="140" cy="238" rx="13" ry="9" />
-        <ellipse cx="172" cy="240" rx="11" ry="7" />
-      </g>
+      {/* === Low-Poly 구름들 — 같은 LowPolyCloud 컴포넌트 사용 === */}
+      <LowPolyCloud variant="d" x={14} y={64} width={78} height={44} />
+      <LowPolyCloud variant="b" x={118} y={86} width={62} height={34} />
+      <LowPolyCloud variant="c" x={14} y={226} width={62} height={34} />
+      <LowPolyCloud variant="a" x={118} y={218} width={68} height={38} />
 
       {/* === 가운데 와와 (월계관 쓴 머리) === */}
       <g transform="translate(100 165)">

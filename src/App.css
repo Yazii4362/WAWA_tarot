@@ -982,6 +982,228 @@
 }
 
 /* ============================================================
+   ANALYZING STAGE — 카드 다 뒤집은 후 결과 직전 로딩 화면
+   "와와가 당신의 미래를 정밀 분석 중..." + 찌그러지는 와와
+   ============================================================ */
+.analyzing {
+  margin: var(--sp-6) auto 0;
+  max-width: 520px;
+  padding: var(--sp-6) var(--sp-6) var(--sp-5);
+  text-align: center;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 2px solid #1a3a5c;
+  box-shadow:
+    4px 4px 0 0 #1a3a5c,
+    0 18px 30px rgba(33, 80, 130, 0.18);
+  font-family: var(--font-pixel);
+  position: relative;
+  overflow: hidden;
+}
+
+.analyzing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(33, 80, 130, 0.025) 0,
+      rgba(33, 80, 130, 0.025) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  pointer-events: none;
+}
+
+.analyzing__head {
+  display: inline-block;
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: #ffffff;
+  background: #1a3a5c;
+  padding: 4px 14px;
+  margin: 0 auto var(--sp-4);
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.analyzing__visual {
+  position: relative;
+  width: 220px;
+  height: 150px;
+  margin: 0 auto var(--sp-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.analyzing__wawa {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 6px rgba(33, 80, 130, 0.22));
+  /* 찌그러지는 모션 — 1초 주기로 8 keyframes */
+  animation: wawa-squish 0.9s steps(1, end) infinite;
+  transform-origin: 50% 70%;
+  image-rendering: -webkit-optimize-contrast;
+  user-select: none;
+  pointer-events: none;
+}
+
+/**
+ * steps(1) — 부드럽지 않고 프레임마다 툭툭 끊어지는 키치한 PSX 톤
+ * scale·rotate·skew 모두 강하게
+ */
+@keyframes wawa-squish {
+  0% {
+    transform: scale(1.32, 0.74) rotate(-6deg) skew(-9deg, 1deg);
+  }
+  12.5% {
+    transform: scale(0.78, 1.32) rotate(4deg) skew(2deg, -7deg);
+  }
+  25% {
+    transform: scale(1.22, 0.86) rotate(8deg) skew(11deg, 0deg);
+  }
+  37.5% {
+    transform: scale(0.86, 1.24) rotate(-7deg) skew(-4deg, 5deg);
+  }
+  50% {
+    transform: scale(1.4, 0.7) rotate(5deg) skew(13deg, -4deg) translateY(-4px);
+  }
+  62.5% {
+    transform: scale(0.82, 1.28) rotate(-9deg) skew(-2deg, 6deg);
+  }
+  75% {
+    transform: scale(1.16, 0.92) rotate(3deg) skew(-7deg, 2deg);
+  }
+  87.5% {
+    transform: scale(1.04, 1.04) rotate(-2deg) skew(3deg, -1deg) translateY(2px);
+  }
+  100% {
+    transform: scale(1.32, 0.74) rotate(-6deg) skew(-9deg, 1deg);
+  }
+}
+
+.analyzing__title {
+  margin: 0 0 var(--sp-4);
+  font-family: var(--font-pixel);
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  color: #1a3a5c;
+}
+
+.analyzing__dots {
+  display: inline-flex;
+  margin-left: 4px;
+}
+
+.analyzing__dots span {
+  animation: dot-blink 1s infinite;
+}
+
+.analyzing__dots span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.analyzing__dots span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes dot-blink {
+  0%,
+  20% {
+    opacity: 0.2;
+  }
+  40%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.analyzing__bar {
+  height: 14px;
+  background: #ffffff;
+  border: 2px solid #1a3a5c;
+  border-radius: 0;
+  overflow: hidden;
+  margin-bottom: var(--sp-3);
+  box-shadow: inset 1px 1px 0 0 rgba(33, 80, 130, 0.15);
+}
+
+.analyzing__bar-fill {
+  height: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    #4aafe8 0,
+    #4aafe8 6px,
+    #2196f3 6px,
+    #2196f3 12px
+  );
+  transition: width 0.18s linear;
+  /* 90's 윈도우 진행바 흐르는 줄무늬 */
+  animation: barber 0.6s linear infinite;
+}
+
+@keyframes barber {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 17px 0;
+  }
+}
+
+.analyzing__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #3a6a8c;
+}
+
+.analyzing__meta strong {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.analyzing__sep {
+  opacity: 0.4;
+}
+
+.analyzing__log {
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0;
+  color: #6b9ab8;
+  background: rgba(214, 240, 255, 0.6);
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid rgba(74, 175, 232, 0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .analyzing {
+    padding: var(--sp-5) var(--sp-4);
+  }
+  .analyzing__visual {
+    width: 180px;
+    height: 130px;
+  }
+  .analyzing__title {
+    font-size: 15px;
+  }
+}
+
+/* ============================================================
    READING — Step Progress
    ============================================================ */
 .reading-header {
