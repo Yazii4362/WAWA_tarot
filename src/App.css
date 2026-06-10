@@ -3949,3 +3949,211 @@
     flex: 1;
   }
 }
+
+/* ============================================================
+   HOME — 미니멀 랜딩 (Hero + Categories)
+   ============================================================ */
+
+.home-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+  gap: var(--sp-6);
+  padding: var(--sp-12) var(--sp-4) var(--sp-16);
+}
+
+.home-hero__logo {
+  display: flex;
+  justify-content: center;
+}
+
+.home-hero__mascot {
+  width: clamp(220px, 50vw, 360px);
+  height: clamp(220px, 50vw, 360px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-hero__copy {
+  max-width: 560px;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.home-hero__title {
+  font-size: clamp(var(--fs-xl), 4.4vw, var(--fs-3xl));
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+  letter-spacing: -0.01em;
+}
+
+.home-hero__title em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--color-pink) 0%, var(--color-sky-deep) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.home-hero__lead {
+  font-size: var(--fs-md);
+  color: var(--c-text-sub);
+  line-height: var(--lh-normal);
+}
+
+.home-hero__cta {
+  margin-top: var(--sp-2);
+}
+
+@media (max-width: 720px) {
+  .home-hero {
+    padding: var(--sp-8) var(--sp-3) var(--sp-12);
+    gap: var(--sp-5);
+  }
+  .home-hero__title {
+    font-size: clamp(var(--fs-lg), 6vw, var(--fs-2xl));
+  }
+  .home-hero__lead {
+    font-size: var(--fs-base);
+  }
+}
+
+/* ── Categories ── */
+
+.home-cats {
+  display: grid;
+  gap: var(--sp-8);
+  padding: var(--sp-8) var(--sp-2) var(--sp-12);
+}
+
+.home-sec-head {
+  text-align: center;
+  display: grid;
+  gap: var(--sp-2);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.home-sec-head__eyebrow {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  font-family: var(--font-pixel);
+}
+
+.home-sec-head__title {
+  font-size: clamp(var(--fs-xl), 3.6vw, var(--fs-2xl));
+  color: var(--c-text);
+}
+
+.home-sec-head__title span {
+  background: linear-gradient(135deg, var(--color-pink) 0%, var(--color-purple) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.home-sec-head__sub {
+  color: var(--c-text-sub);
+  font-size: var(--fs-sm);
+}
+
+.home-cats__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+@media (max-width: 540px) {
+  .home-cats__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home-cat {
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  gap: var(--sp-2);
+  padding: var(--sp-6) var(--sp-5);
+  border-radius: var(--r-lg);
+  background: var(--c-glass-strong);
+  border: 1px solid var(--c-glass-border);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--t-base),
+    box-shadow var(--t-base),
+    border-color var(--t-base);
+  text-align: left;
+  min-height: 180px;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-cat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    var(--cat-accent, var(--color-sky-deep)) 0%,
+    transparent 55%
+  );
+  opacity: 0.12;
+  transition: opacity var(--t-base);
+}
+
+.home-cat:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-float);
+  border-color: var(--cat-accent, var(--color-sky-deep));
+}
+
+.home-cat:hover::before {
+  opacity: 0.22;
+}
+
+.home-cat__emoji {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.home-cat__name {
+  font-size: var(--fs-lg);
+  color: var(--c-text);
+  margin: 0;
+}
+
+.home-cat__tag {
+  font-size: var(--fs-sm);
+  color: var(--c-text-sub);
+  line-height: var(--lh-snug);
+  margin: 0;
+}
+
+.home-cat__cta {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.12em;
+  color: var(--cat-accent, var(--color-sky-deep));
+  font-family: var(--font-pixel);
+  align-self: end;
+}
+
+.home-cat--pink {
+  --cat-accent: var(--color-pink);
+}
+.home-cat--amber {
+  --cat-accent: var(--color-accent);
+}
+.home-cat--sky {
+  --cat-accent: var(--color-sky-deep);
+}
+.home-cat--violet {
+  --cat-accent: var(--color-purple);
+}

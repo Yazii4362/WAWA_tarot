@@ -1,11 +1,11 @@
 /**
- * Generate favicons from public/images/wawa/angel.png.
+ * Generate favicons from public/images/wawa/angel.webp.
  *
- * Output:
+ * Output (브라우저 호환성을 위해 PNG 유지):
  *  - public/favicon-16.png
  *  - public/favicon-32.png
  *  - public/favicon-48.png
- *  - public/apple-touch-icon.png  (180×180)
+ *  - public/apple-touch-icon.png  (180×180, iOS는 PNG 필수)
  *
  * Usage: node scripts/build-favicon.mjs
  */
@@ -13,7 +13,7 @@ import sharp from "sharp";
 import { resolve } from "node:path";
 import { statSync } from "node:fs";
 
-const SRC = resolve("public/images/wawa/angel.png");
+const SRC = resolve("public/images/wawa/angel.webp");
 
 const TARGETS = [
   { size: 16, name: "favicon-16.png" },

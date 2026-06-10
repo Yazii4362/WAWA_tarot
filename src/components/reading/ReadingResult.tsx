@@ -119,12 +119,12 @@ function ResultCta({
     setTimeout(() => setShareState("idle"), 2000);
   };
 
-  const shareLabel =
+  const shareStatus =
     shareState === "shared"
       ? "✓ 공유했어요"
       : shareState === "copied"
         ? "✓ 링크 복사됨"
-        : "🔗 공유하기";
+        : "";
 
   return (
     <div className="result-cta">
@@ -134,35 +134,51 @@ function ResultCta({
         </span>
         <div>
           <span className="result-cta__title">다른 고민도 물어보고 싶다면?</span>
-          <span className="result-cta__sub">
-            와와는 늘 그 자리에 있어요
-          </span>
+          <span className="result-cta__sub">와와는 늘 그 자리에 있어요</span>
         </div>
       </div>
 
       <div className="result-cta__actions">
         <button
           type="button"
-          className="btn btn-ghost result-cta__btn"
+          className="result-cta__img-btn"
           onClick={handleShare}
-          aria-live="polite"
+          aria-label="결과 공유하기"
         >
-          {shareLabel}
+          <img
+            src="/images/ui/btn-share.webp"
+            alt=""
+            draggable={false}
+            width={220}
+            height={74}
+          />
         </button>
         <button
           type="button"
-          className="btn btn-primary result-cta__btn"
+          className="result-cta__img-btn"
           onClick={onReset}
+          aria-label="다시 뽑기 — 다른 질문으로"
         >
-          🔄 다시 뽑기
+          <img
+            src="/images/ui/btn-again.webp"
+            alt=""
+            draggable={false}
+            width={220}
+            height={74}
+          />
         </button>
+        {shareStatus && (
+          <span className="result-cta__share-status" aria-live="polite">
+            {shareStatus}
+          </span>
+        )}
         <button
           type="button"
-          className="btn btn-ghost result-cta__btn-mini"
+          className="result-cta__btn-mini"
           onClick={onReshuffle}
           title="같은 질문으로 카드만 다시"
         >
-          같은 질문 재셔플
+          같은 질문으로 재셔플
         </button>
       </div>
     </div>
