@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { Home } from "./pages/Home";
 import { Reading } from "./pages/Reading";
+import { Category } from "./pages/Category";
 import { About } from "./pages/About";
 import "./App.css";
 
@@ -11,6 +12,8 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Home />} />
+          <Route path="c/:categoryId" element={<Category />} />
+          <Route path="reading" element={<Reading />} />
           <Route path="reading/:spreadId" element={<Reading />} />
           <Route path="about" element={<About />} />
           <Route path="*" element={<NotFound />} />
